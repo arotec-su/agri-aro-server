@@ -9,6 +9,19 @@ admin.initializeApp({
 });
 
 
+async function getDevicesOfUser(owner_id){
+    const _query = await admin.firestore().collection('devices').where(
+        'owner_id', '==',owner_id
+    ).get();
+
+    if (_query.size == 0){
+        return [];
+    }  
+   return _query.docs.map((doc)=>{
+    return doc.data();
+   });
+}
+
 
 async function saveDataOfDevice(device_id, data){
     await admin.firestore().collection(`dados_${device_id}`).doc().
@@ -16,6 +29,11 @@ async function saveDataOfDevice(device_id, data){
         moment: Timestamp.now(), 
         ...data
     });
+
+}
+
+async function getUserData(uid){
+    return (await admin.firestore().collection('users').doc(uid).get()).data();
 
 }
 
@@ -105,5 +123,7 @@ hasUser,
 loginUser, 
 verifyDevice, 
 saveDataOfDevice, 
-hasUserById
+hasUserById, 
+getUserData, 
+getDevicesOfUser
 }

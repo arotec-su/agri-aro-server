@@ -1,4 +1,5 @@
-const { verifyDevice, saveDataOfDevice } = require("../firebase");
+const { verifyDevice, saveDataOfDevice, getUserData, getDevicesOfUser, hasUserById } = require("../firebase");
+const { verifyToken } = require("../jwt");
 
 
 async function VerifyDeviceRoute(req, res) {
@@ -64,7 +65,60 @@ async function DeviceSendDataRoute(req, res) {
 
 }
 
+async function DeviceDataRoute(req, res){
+
+    const { token } = req.body;
+
+    //id do device
+    const {id } =req.params;
+
+    if (!token || !id) {
+        res.send({
+            status: 'failed',
+            message: 'Invalid request'
+        })
+        return;
+    }
+
+    const data = verifyToken(token);
+
+    if (data == null) {
+        res.send({
+            status: 'failed',
+            message: 'Invalid token'
+        })
+        return;
+
+    }
+
+    const { uid } = data;
+
+
+    if (hasUserById(uid)) {
+        const device  = await verifyDevice(id);
+
+        if (device.owner_id == uid){
+            res.send({
+                status: 'success',
+                device_data: {
+                    ...device
+                }
+               
+            })
+        }
+
+      
+    }
+    else {
+        res.send({
+            status: 'failed',
+            message: 'Invalid token'
+        })
+    }
+
+}
 module.exports = {
     VerifyDeviceRoute,
-    DeviceSendDataRoute
+    DeviceSendDataRoute, 
+    DeviceDataRoute
 }

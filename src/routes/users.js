@@ -1,6 +1,7 @@
-const { createUser, hasUser, loginUser, hasUserById } = require("../firebase");
+const { createUser, hasUser, loginUser, hasUserById, getDevicesOfUser, getUserData } = require("../firebase");
 const { generateToken, verifyToken } = require("../jwt");
 
+//Create
 async function CreateUserRoute(req, res) {
     const { email, telefone, nome, password } = req.body;
 
@@ -49,7 +50,7 @@ async function CreateUserRoute(req, res) {
 
 }
 
-
+//Login
 async function LoginUserRoute(req, res) {
     const { token_id } = req.body;
 
@@ -75,7 +76,6 @@ async function LoginUserRoute(req, res) {
 
     }
 
-
     const token = generateToken({
         uid: uid,
     })
@@ -89,6 +89,7 @@ async function LoginUserRoute(req, res) {
 
 }
 
+// Verificar o login
 async function VerifyUserRoute(req, res) {
     const { token } = req.body;
 
@@ -131,8 +132,65 @@ async function VerifyUserRoute(req, res) {
 
 }
 
+
+// Pegar dados do usuario logado
+
+
+async function UserDataRoute(req, res){
+
+    const { token } = req.body;
+
+    if (!token) {
+        res.send({
+            status: 'failed',
+            message: 'Invalid request'
+        })
+        return;
+    }
+
+
+    const data = verifyToken(token);
+
+    if (data == null) {
+        res.send({
+            status: 'failed',
+            message: 'Invalid token'
+        })
+        return;
+
+    }
+
+    const { uid } = data;
+
+
+    if (hasUserById(uid)) {
+        const user_data = await getUserData(uid);
+        const devices  = await getDevicesOfUser(uid);
+
+        res.send({
+            status: 'success',
+            user_data: {
+                ...user_data
+            },
+            device_data: devices.map((dev)=>{
+                return {
+                    device_id: dev.device_id, 
+                    position: dev.position
+                }
+            })
+        })
+    }
+    else {
+        res.send({
+            status: 'failed',
+            message: 'Invalid token'
+        })
+    }
+
+}
 module.exports = {
     CreateUserRoute,
     LoginUserRoute,
-    VerifyUserRoute
+    VerifyUserRoute, 
+    UserDataRoute
 }

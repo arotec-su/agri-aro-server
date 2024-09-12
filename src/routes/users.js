@@ -175,6 +175,7 @@ async function UserDataRoute(req, res){
             device_data: devices.map((dev)=>{
                 return {
                     device_id: dev.device_id, 
+                    device_name:dev.device_name,
                     position: dev.position
                 }
             })

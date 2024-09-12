@@ -45,7 +45,12 @@ async function DeviceSendDataRoute(req, res) {
         return;
     }
 
-
+    console.log( {
+        temperatura: T,
+        umidade_ambiental: UA,
+        umidade_solo: US
+    });
+    return;
     await saveDataOfDevice(DEVICE_ID,
         {
             temperatura: T,

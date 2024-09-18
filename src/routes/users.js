@@ -1,9 +1,9 @@
-const { createUser, hasUser, loginUser, hasUserById, getDevicesOfUser, getUserData } = require("../firebase");
+const { createUser, hasUser, loginUser, hasUserById, getDevicesOfUser, getUserData, setupUser } = require("../firebase");
 const { generateToken, verifyToken } = require("../jwt");
 
 //Create
 async function CreateUserRoute(req, res) {
-    const { email, telefone, nome, password } = req.body;
+    var { email, telefone, nome, password } = req.body;
 
 
     if (!email || !telefone || !nome || !password) {
@@ -12,6 +12,9 @@ async function CreateUserRoute(req, res) {
             message: 'Invalid request'
         })
         return;
+    }
+    if (!telefone.startsWith('+')){
+        telefone = '+244'+telefone;
     }
     var uid = '';
     try {
@@ -29,7 +32,8 @@ async function CreateUserRoute(req, res) {
         uid = await createUser(email, nome, telefone, password);
 
     }
-    catch {
+    catch (err){
+        console.log(err.message);
         res.send({
             status: 'failed',
             message: 'Invalid request'
@@ -189,9 +193,72 @@ async function UserDataRoute(req, res){
     }
 
 }
+
+// Setup Route
+
+async function UserSetupRoute(req, res){
+
+    const { token, nome_propriedade , device_id, 
+        latitude, longitude, tipo_solo, 
+        tipo_cultura
+     } = req.body;
+
+    if (!token || !nome_propriedade || !device_id
+        || !latitude || !longitude || !tipo_solo || !tipo_cultura
+    ) {
+        res.send({
+            status: 'failed',
+            message: 'Invalid request'
+        })
+        return;
+    }
+
+
+
+    const data = verifyToken(token);
+
+    if (data == null) {
+        res.send({
+            status: 'failed',
+            message: 'Invalid token'
+        })
+        return;
+
+    }
+
+    const {uid} = data;
+
+    const devices = await getDevicesOfUser(uid);
+ ;
+    for (let dev of devices){
+        if (dev.device_id == device_id){
+            await setupUser(device_id,uid, {
+                nome_propriedade, 
+                latitude, 
+                longitude, 
+                tipo_solo, 
+                tipo_cultura
+            })
+            res.send({
+                status: 'success',
+                message: 'Account configured'
+            })
+            return;
+        }
+      
+    }
+
+    res.send({
+        status: 'failed',
+        message: 'Invalid request'
+    })
+
+    
+}
 module.exports = {
     CreateUserRoute,
     LoginUserRoute,
     VerifyUserRoute, 
-    UserDataRoute
+    UserDataRoute, 
+    UserSetupRoute
 }

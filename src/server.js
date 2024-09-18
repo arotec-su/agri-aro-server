@@ -6,7 +6,7 @@ const cors  = require('cors');
 const { getServerIP } = require('./server_info');
 
 const { HomeRoute } = require('./routes/home');
-const { CreateUserRoute, LoginUserRoute, VerifyUserRoute, UserDataRoute
+const { CreateUserRoute, LoginUserRoute, VerifyUserRoute, UserDataRoute, UserSetupRoute
  } = require('./routes/users');
 const { VerifyDeviceRoute, DeviceSendDataRoute, DeviceDataRoute } = require('./routes/devices');
 
@@ -25,6 +25,7 @@ app.post('/users/verify', VerifyUserRoute);
 app.post('/users', CreateUserRoute);
 app.post('/login', LoginUserRoute);
 app.post('/users/data', UserDataRoute);
+app.post('/users/setup', UserSetupRoute);
 
 
 

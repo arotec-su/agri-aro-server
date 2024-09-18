@@ -59,7 +59,8 @@ async function hasUserById(id){
         }
         return false;
 
-    }catch{
+    }catch(err){
+        console.log(err.message);
 
         return false;
     }
@@ -73,7 +74,9 @@ async function hasUser(email){
         }
         return false;
 
-    }catch{
+    }catch(err){
+        console.log(err.message);
+
 
         return false;
     }
@@ -85,7 +88,6 @@ async function createUser(email, nome,telefone,password){
         emailVerified: false,
         email: email, 
         displayName: nome, 
-        phoneNumber: telefone, 
         password: password, 
         disabled:false
     });
@@ -95,7 +97,8 @@ async function createUser(email, nome,telefone,password){
         nome: nome, 
         email: email, 
         telefone: telefone,
-        dataCadastro: Timestamp.now()
+        dataCadastro: Timestamp.now(), 
+        actived: false
     });
 
     return user.uid;
@@ -111,10 +114,32 @@ async function loginUser(token_id){
 
         
     }
-    catch{
+    catch (err){
+        console.log(err.message);
+
         return '';
     }
 
+}
+
+async function setupUser(device_id,uid,  data){
+const { nome_propriedade, latitude, 
+    longitude, 
+    tipo_solo, 
+    tipo_cultura} = data;
+    await admin.firestore().collection('devices').doc(device_id).update({
+        device_name: nome_propriedade, 
+        position: {
+            latitude, 
+            longitude
+        }, 
+        tipo_solo, 
+        tipo_cultura
+    });
+
+    await admin.firestore().collection('users').doc(uid).update({
+        actived:true
+    })
 }
 
 module.exports ={
@@ -125,5 +150,6 @@ verifyDevice,
 saveDataOfDevice, 
 hasUserById, 
 getUserData, 
-getDevicesOfUser
+getDevicesOfUser, 
+setupUser
 }

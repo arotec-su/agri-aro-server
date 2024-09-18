@@ -16,6 +16,7 @@ function verifyToken(token) {
         var decoded = verify(token, PRIVATE_KEY);
         return decoded;
     } catch (err) {
+        console.log(err.message);
         return null;
     }
 

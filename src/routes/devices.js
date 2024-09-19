@@ -1,5 +1,7 @@
-const { verifyDevice, saveDataOfDevice, getUserData, getDevicesOfUser, hasUserById } = require("../firebase");
+const { Timestamp } = require("firebase-admin/firestore");
+const { verifyDevice, saveDataOfDevice, getUserData, getDevicesOfUser, hasUserById, getSensData } = require("../firebase");
 const { verifyToken } = require("../jwt");
+const { sockets } = require("../socket");
 
 
 async function VerifyDeviceRoute(req, res) {
@@ -27,10 +29,13 @@ async function VerifyDeviceRoute(req, res) {
 async function DeviceSendDataRoute(req, res) {
     const { T, UA, US, DEVICE_ID } = req.body;
 
+    console.log(req.body);
 
-    if (!T || !UA || !US || !DEVICE_ID){
+
+
+    if (!T || !UA || !US || !DEVICE_ID) {
         res.send({
-            status: 'failed', 
+            status: 'failed',
             message: 'Invalid request'
         })
         return;
@@ -45,23 +50,34 @@ async function DeviceSendDataRoute(req, res) {
         return;
     }
 
-    console.log( {
+    const data = {
         temperatura: T,
         umidade_ambiental: UA,
-        umidade_solo: US
-    });
-    return;
+        umidade_solo: US,
+        ph: 0,
+        nitrogenio: 0,
+        fosforo: 0,
+        potassio: 0,  
+        moment: Timestamp.now()
+    };
+
     await saveDataOfDevice(DEVICE_ID,
-        {
-            temperatura: T,
-            umidade_ambiental: UA,
-            umidade_solo: US
-        }
+        data
     )
-
-
     //enviar via websocket
+    if (DEVICE_ID in sockets) {
 
+        for (const _socket of sockets[DEVICE_ID]) {
+            _socket.socket.emit('send_data', JSON.stringify(data.map((d)=>{
+                return {
+                    ...d, 
+                 moment: d.moment.toDate().getTime()
+
+                }
+            })))
+        }
+
+    }
 
 
     res.send({
@@ -70,12 +86,12 @@ async function DeviceSendDataRoute(req, res) {
 
 }
 
-async function DeviceDataRoute(req, res){
+async function DeviceDataRoute(req, res) {
 
     const { token } = req.body;
 
     //id do device
-    const {id } =req.params;
+    const { id } = req.params;
 
     if (!token || !id) {
         res.send({
@@ -100,19 +116,19 @@ async function DeviceDataRoute(req, res){
 
 
     if (hasUserById(uid)) {
-        const device  = await verifyDevice(id);
+        const device = await verifyDevice(id);
 
-        if (device.owner_id == uid){
+        if (device.owner_id == uid) {
             res.send({
                 status: 'success',
                 device_data: {
                     ...device
                 }
-               
+
             })
         }
 
-      
+
     }
     else {
         res.send({
@@ -122,8 +138,69 @@ async function DeviceDataRoute(req, res){
     }
 
 }
+
+
+async function DataSensDeviceRoute(req, res) {
+    const { token, min_date, max_date } = req.body;
+
+    //id do device
+    const { id } = req.params;
+
+    if (!token || !id || !min_date || !max_date) {
+        res.send({
+            status: 'failed',
+            message: 'Invalid request'
+        })
+        return;
+    }
+    
+    const data = verifyToken(token);
+
+    if (data == null) {
+        res.send({
+            status: 'failed',
+            message: 'Invalid token'
+        })
+        return;
+
+    }
+    
+    const device = await verifyDevice(id);
+
+    if (device == null) {
+        res.send({
+            status: "failed",
+            message: "Invalid Device"
+        })
+        return;
+    }
+    else if (device.owner_id !== data.uid) {
+        res.send({
+            status: "failed",
+            message: "Invalid request"
+        })
+        return;
+    }
+
+    const sensData = await getSensData(id, min_date, max_date);
+    res.send({
+        status: "success",
+        data: sensData.map((d)=>{
+    
+            return {
+                ...d, 
+                moment: d.moment.toDate().getTime()
+            }
+
+        })
+    })
+
+
+
+}
 module.exports = {
     VerifyDeviceRoute,
-    DeviceSendDataRoute, 
-    DeviceDataRoute
+    DeviceSendDataRoute,
+    DeviceDataRoute,
+    DataSensDeviceRoute
 }

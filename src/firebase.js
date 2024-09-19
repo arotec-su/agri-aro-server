@@ -26,10 +26,8 @@ async function getDevicesOfUser(owner_id){
 async function saveDataOfDevice(device_id, data){
     await admin.firestore().collection(`dados_${device_id}`).doc().
     create({
-        moment: Timestamp.now(), 
         ...data
     });
-
 }
 
 async function getUserData(uid){
@@ -142,6 +140,17 @@ const { nome_propriedade, latitude,
     })
 }
 
+async function getSensData(device_id, min, max){
+    const _query = await admin.firestore().collection(`dados_${device_id}`)
+  .where("moment", ">", Timestamp.fromDate(new Date(min))).where("moment", "<", Timestamp.fromDate(new Date(max)))
+    .get();
+
+    return _query.docs.map((doc)=>{
+        return doc.data();
+    })
+
+}
+
 module.exports ={
 createUser, 
 hasUser, 
@@ -151,5 +160,6 @@ saveDataOfDevice,
 hasUserById, 
 getUserData, 
 getDevicesOfUser, 
-setupUser
+setupUser, 
+getSensData
 }

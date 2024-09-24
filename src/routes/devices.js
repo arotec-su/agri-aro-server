@@ -68,13 +68,13 @@ async function DeviceSendDataRoute(req, res) {
     if (DEVICE_ID in sockets) {
 
         for (const _socket of sockets[DEVICE_ID]) {
-            _socket.socket.emit('send_data', JSON.stringify(data.map((d)=>{
-                return {
-                    ...d, 
-                 moment: d.moment.toDate().getTime()
+            _socket.socket.emit('send_data', JSON.stringify(
+                 {
+                    ...data, 
+                 moment: data.moment.toDate().getTime()
 
                 }
-            })))
+            ))
         }
 
     }

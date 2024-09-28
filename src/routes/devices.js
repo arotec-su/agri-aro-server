@@ -2,6 +2,7 @@ const { Timestamp } = require("firebase-admin/firestore");
 const { verifyDevice, saveDataOfDevice, getUserData, getDevicesOfUser, hasUserById, getSensData } = require("../firebase");
 const { verifyToken } = require("../jwt");
 const { sockets } = require("../socket");
+const { getTokenHeader } = require("../auth");
 
 
 async function VerifyDeviceRoute(req, res) {
@@ -30,7 +31,6 @@ async function DeviceSendDataRoute(req, res) {
     const { T, UA, US, DEVICE_ID } = req.body;
 
     console.log(req.body);
-
 
 
     if (!T || !UA || !US || !DEVICE_ID) {
@@ -88,7 +88,7 @@ async function DeviceSendDataRoute(req, res) {
 
 async function DeviceDataRoute(req, res) {
 
-    const { token } = req.body;
+    const token = getTokenHeader(req);
 
     //id do device
     const { id } = req.params;
@@ -118,7 +118,7 @@ async function DeviceDataRoute(req, res) {
     if (hasUserById(uid)) {
         const device = await verifyDevice(id);
 
-        if (device.owner_id == uid) {
+        if (device.user_id == uid) {
             res.send({
                 status: 'success',
                 device_data: {
@@ -141,7 +141,8 @@ async function DeviceDataRoute(req, res) {
 
 
 async function DataSensDeviceRoute(req, res) {
-    const { token, min_date, max_date } = req.body;
+    const {  min_date, max_date } = req.query;
+    const token = getTokenHeader(req);    
 
     //id do device
     const { id } = req.params;
@@ -156,15 +157,7 @@ async function DataSensDeviceRoute(req, res) {
     
     const data = verifyToken(token);
 
-    if (data == null) {
-        res.send({
-            status: 'failed',
-            message: 'Invalid token'
-        })
-        return;
 
-    }
-    
     const device = await verifyDevice(id);
 
     if (device == null) {
@@ -174,7 +167,7 @@ async function DataSensDeviceRoute(req, res) {
         })
         return;
     }
-    else if (device.owner_id !== data.uid) {
+    else if (device.user_id !== data.uid) {
         res.send({
             status: "failed",
             message: "Invalid request"

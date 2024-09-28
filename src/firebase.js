@@ -5,74 +5,91 @@ var serviceAccount = require("../agri-aro-key-firebase.json");
 const { Timestamp } = require("firebase-admin/firestore");
 
 admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount)
+    credential: admin.credential.cert(serviceAccount)
 });
 
 
-async function getDevicesOfUser(owner_id){
+async function getDevicesOfUser(user_id) {
     const _query = await admin.firestore().collection('devices').where(
-        'owner_id', '==',owner_id
+        'user_id', '==', user_id
     ).get();
 
-    if (_query.size == 0){
+    if (_query.size == 0) {
         return [];
-    }  
-   return _query.docs.map((doc)=>{
-    return doc.data();
-   });
-}
-
-
-async function saveDataOfDevice(device_id, data){
-    await admin.firestore().collection(`dados_${device_id}`).doc().
-    create({
-        ...data
+    }
+    return _query.docs.map((doc) => {
+        return doc.data();
     });
 }
 
-async function getUserData(uid){
+async function getFieldsOfUser(user_id) {
+    const _query = await admin.firestore().collection('fields').where(
+        'user_id', '==', user_id
+    ).get();
+
+    if (_query.size == 0) {
+        return [];
+    }
+    return _query.docs.map((doc) => {
+        return {
+            ...doc.data(), 
+            id: doc.id
+        
+        };
+    });
+}
+
+
+async function saveDataOfDevice(device_id, data) {
+    await admin.firestore().collection(`dados_${device_id}`).doc().
+        create({
+            ...data
+        });
+}
+
+async function getUserData(uid) {
     return (await admin.firestore().collection('users').doc(uid).get()).data();
 
 }
 
 //verify device
 
-async function verifyDevice(device_id){
+async function verifyDevice(device_id) {
     const _query = await admin.firestore().collection('devices').where(
-        'device_id', '==',device_id
+        'device_id', '==', device_id
     ).get();
 
-    if (_query.size == 0){
+    if (_query.size == 0) {
         return null;
-    }  
-   return _query.docs[0].data();
+    }
+    return _query.docs[0].data();
 }
 
 
-async function hasUserById(id){
-    try{
+async function hasUserById(id) {
+    try {
         const user = await admin.auth().getUser(id);
-        if (user.uid){
+        if (user.uid) {
             return true;
         }
         return false;
 
-    }catch(err){
+    } catch (err) {
         console.log(err.message);
 
         return false;
     }
 }
-async function hasUser(email){
+async function hasUser(email) {
 
-    try{
+    try {
         const user = await admin.auth().getUserByEmail(email);
-        if (user.uid){
+        if (user.uid) {
             return true;
         }
         return false;
 
-    }catch(err){
+    } catch (err) {
         console.log(err.message);
 
 
@@ -81,38 +98,38 @@ async function hasUser(email){
 
 }
 
-async function createUser(email, nome,telefone,password){
-    const user  = await admin.auth().createUser({
+async function createUser(email, nome, telefone, password) {
+    const user = await admin.auth().createUser({
         emailVerified: false,
-        email: email, 
-        displayName: nome, 
-        password: password, 
-        disabled:false
+        email: email,
+        displayName: nome,
+        password: password,
+        disabled: false
     });
 
     await admin.firestore().collection('users').doc(user.uid).create({
-        id: user.uid, 
-        nome: nome, 
-        email: email, 
+        id: user.uid,
+        nome: nome,
+        email: email,
         telefone: telefone,
-        dataCadastro: Timestamp.now(), 
+        dataCadastro: Timestamp.now(),
         actived: false
     });
 
     return user.uid;
 }
 
-async function loginUser(token_id){
+async function loginUser(token_id) {
 
-    try{
-      const decodedToken = await admin.auth()
-      .verifyIdToken(token_id);
+    try {
+        const decodedToken = await admin.auth()
+            .verifyIdToken(token_id);
 
-      return decodedToken.uid;
+        return decodedToken.uid;
 
-        
+
     }
-    catch (err){
+    catch (err) {
         console.log(err.message);
 
         return '';
@@ -120,46 +137,56 @@ async function loginUser(token_id){
 
 }
 
-async function setupUser(device_id,uid,  data){
-const { nome_propriedade, latitude, 
-    longitude, 
-    tipo_solo, 
-    tipo_cultura} = data;
-    await admin.firestore().collection('devices').doc(device_id).update({
-        device_name: nome_propriedade, 
+async function setupUser(device_id, uid, data) {
+    const { nome_propriedade, latitude,
+        longitude,
+        tipo_solo,
+        tipo_cultura } = data;
+    const _field = await admin.firestore().collection('fields').add({
+        dataCriaca: Timestamp.now(),
+        field_name: nome_propriedade,
+        user_id: uid,
+        device_id: device_id,
         position: {
-            latitude, 
+            latitude,
             longitude
-        }, 
-        tipo_solo, 
+        },
+        tipo_solo,
         tipo_cultura
     });
 
+
+    await admin.firestore().collection('devices').doc(device_id).update({
+        field_id: _field.id,
+        user_id: uid
+    });
+
     await admin.firestore().collection('users').doc(uid).update({
-        actived:true
+        actived: true
     })
 }
 
-async function getSensData(device_id, min, max){
+async function getSensData(device_id, min, max) {
     const _query = await admin.firestore().collection(`dados_${device_id}`)
-  .where("moment", ">", Timestamp.fromDate(new Date(min))).where("moment", "<", Timestamp.fromDate(new Date(max)))
-    .get();
+        .where("moment", ">", Timestamp.fromDate(new Date(min))).where("moment", "<", Timestamp.fromDate(new Date(max)))
+        .get();
 
-    return _query.docs.map((doc)=>{
+    return _query.docs.map((doc) => {
         return doc.data();
     })
 
 }
 
-module.exports ={
-createUser, 
-hasUser, 
-loginUser, 
-verifyDevice, 
-saveDataOfDevice, 
-hasUserById, 
-getUserData, 
-getDevicesOfUser, 
-setupUser, 
-getSensData
+module.exports = {
+    createUser,
+    hasUser,
+    loginUser,
+    verifyDevice,
+    saveDataOfDevice,
+    hasUserById,
+    getUserData,
+    getDevicesOfUser,
+    getFieldsOfUser,
+    setupUser,
+    getSensData
 }

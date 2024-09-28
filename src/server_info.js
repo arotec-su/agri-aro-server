@@ -4,6 +4,7 @@ const os = require('node:os');
 
 const options = { family: 4 };
 
+// IP do Servidor
 async function getServerIP() {
 
     return new Promise((resolve, reject) => {
@@ -19,7 +20,8 @@ async function getServerIP() {
 
 }
 
-async function getClientIP(req){
+// IP do Cliente
+function getClientIP(req){
     var ip = req.socket.remoteAddress.split(':');
     ip = ip[ip.length-1];
   return ip;

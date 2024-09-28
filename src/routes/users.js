@@ -1,4 +1,5 @@
-const { createUser, hasUser, loginUser, hasUserById, getDevicesOfUser, getUserData, setupUser } = require("../firebase");
+const { getTokenHeader } = require("../auth");
+const { createUser, hasUser, loginUser, hasUserById, getDevicesOfUser, getUserData, setupUser, verifyDevice, getFieldsOfUser } = require("../firebase");
 const { generateToken, verifyToken } = require("../jwt");
 
 //Create
@@ -13,8 +14,8 @@ async function CreateUserRoute(req, res) {
         })
         return;
     }
-    if (!telefone.startsWith('+')){
-        telefone = '+244'+telefone;
+    if (!telefone.startsWith('+')) {
+        telefone = '+244' + telefone;
     }
     var uid = '';
     try {
@@ -32,7 +33,7 @@ async function CreateUserRoute(req, res) {
         uid = await createUser(email, nome, telefone, password);
 
     }
-    catch (err){
+    catch (err) {
         console.log(err.message);
         res.send({
             status: 'failed',
@@ -95,27 +96,10 @@ async function LoginUserRoute(req, res) {
 
 // Verificar o login
 async function VerifyUserRoute(req, res) {
-    const { token } = req.body;
-
-    if (!token) {
-        res.send({
-            status: 'failed',
-            message: 'Invalid request'
-        })
-        return;
-    }
+    const token = getTokenHeader(req);
 
 
     const data = verifyToken(token);
-
-    if (data == null) {
-        res.send({
-            status: 'failed',
-            message: 'Invalid token'
-        })
-        return;
-
-    }
 
     const { uid } = data;
 
@@ -140,68 +124,38 @@ async function VerifyUserRoute(req, res) {
 // Pegar dados do usuario logado
 
 
-async function UserDataRoute(req, res){
+async function UserDataRoute(req, res) {
 
-    const { token } = req.body;
-
-    if (!token) {
-        res.send({
-            status: 'failed',
-            message: 'Invalid request'
-        })
-        return;
-    }
-
+    const token = getTokenHeader(req);
 
     const data = verifyToken(token);
-
-    if (data == null) {
-        res.send({
-            status: 'failed',
-            message: 'Invalid token'
-        })
-        return;
-
-    }
-
     const { uid } = data;
 
+    const user_data = await getUserData(uid);
+    const fields = await getFieldsOfUser(uid);
 
-    if (hasUserById(uid)) {
-        const user_data = await getUserData(uid);
-        const devices  = await getDevicesOfUser(uid);
+    res.send({
+        status: 'success',
+        user_data: {
+            ...user_data
+        },
+        fields: fields
+    })
 
-        res.send({
-            status: 'success',
-            user_data: {
-                ...user_data
-            },
-            device_data: devices.map((dev)=>{
-                return {
-                    device_id: dev.device_id, 
-                    device_name:dev.device_name,
-                    position: dev.position
-                }
-            })
-        })
-    }
-    else {
-        res.send({
-            status: 'failed',
-            message: 'Invalid token'
-        })
-    }
 
 }
 
 // Setup Route
 
-async function UserSetupRoute(req, res){
+async function UserSetupRoute(req, res) {
 
-    const { token, nome_propriedade , device_id, 
-        latitude, longitude, tipo_solo, 
+    const { nome_propriedade, device_id,
+        latitude, longitude, tipo_solo,
         tipo_cultura
-     } = req.body;
+    } = req.body;
+
+    const token = getTokenHeader(req);
+
 
     if (!token || !nome_propriedade || !device_id
         || !latitude || !longitude || !tipo_solo || !tipo_cultura
@@ -217,48 +171,45 @@ async function UserSetupRoute(req, res){
 
     const data = verifyToken(token);
 
-    if (data == null) {
+    const { uid } = data;
+
+
+    const device = await verifyDevice(device_id);
+
+    if (device == null) {
         res.send({
             status: 'failed',
-            message: 'Invalid token'
+            message: 'Device not exists'
         })
-        return;
-
+    }
+    else if (device.user_id && device.field_id) {
+        res.send({
+            status: 'failed',
+            message: 'Device is already being used'
+        })
     }
 
-    const {uid} = data;
-
-    const devices = await getDevicesOfUser(uid);
- ;
-    for (let dev of devices){
-        if (dev.device_id == device_id){
-            await setupUser(device_id,uid, {
-                nome_propriedade, 
-                latitude, 
-                longitude, 
-                tipo_solo, 
-                tipo_cultura
-            })
-            res.send({
-                status: 'success',
-                message: 'Account configured'
-            })
-            return;
-        }
-      
-    }
-
-    res.send({
-        status: 'failed',
-        message: 'Invalid request'
+    await setupUser(device_id, uid, {
+        nome_propriedade,
+        latitude,
+        longitude,
+        tipo_solo,
+        tipo_cultura
     })
+    res.send({
+        status: 'success',
+        message: 'Account configured'
+    })
+    return;
 
-    
+
+
+
 }
 module.exports = {
     CreateUserRoute,
     LoginUserRoute,
-    VerifyUserRoute, 
-    UserDataRoute, 
+    VerifyUserRoute,
+    UserDataRoute,
     UserSetupRoute
 }

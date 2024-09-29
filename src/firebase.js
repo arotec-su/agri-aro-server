@@ -141,12 +141,13 @@ async function setupUser(device_id, uid, data) {
     const { nome_propriedade, latitude,
         longitude,
         tipo_solo,
-        tipo_cultura } = data;
+        tipo_cultura, address } = data;
     const _field = await admin.firestore().collection('fields').add({
-        dataCriaca: Timestamp.now(),
+        dataCriacao: Timestamp.now(),
         field_name: nome_propriedade,
         user_id: uid,
         device_id: device_id,
+        address,
         position: {
             latitude,
             longitude

@@ -151,14 +151,14 @@ async function UserSetupRoute(req, res) {
 
     const { nome_propriedade, device_id,
         latitude, longitude, tipo_solo,
-        tipo_cultura
+        tipo_cultura, address
     } = req.body;
 
     const token = getTokenHeader(req);
 
 
     if (!token || !nome_propriedade || !device_id
-        || !latitude || !longitude || !tipo_solo || !tipo_cultura
+        || !latitude || !longitude || !tipo_solo || !tipo_cultura || !address
     ) {
         res.send({
             status: 'failed',
@@ -166,7 +166,6 @@ async function UserSetupRoute(req, res) {
         })
         return;
     }
-
 
 
     const data = verifyToken(token);
@@ -181,12 +180,14 @@ async function UserSetupRoute(req, res) {
             status: 'failed',
             message: 'Device not exists'
         })
+        return;
     }
     else if (device.user_id && device.field_id) {
         res.send({
             status: 'failed',
             message: 'Device is already being used'
         })
+        return;
     }
 
     await setupUser(device_id, uid, {
@@ -194,16 +195,13 @@ async function UserSetupRoute(req, res) {
         latitude,
         longitude,
         tipo_solo,
-        tipo_cultura
+        tipo_cultura, 
+        address
     })
     res.send({
         status: 'success',
         message: 'Account configured'
     })
-    return;
-
-
-
 
 }
 module.exports = {

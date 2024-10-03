@@ -1,5 +1,5 @@
 const { getTokenHeader } = require("../auth");
-const { createUser, hasUser, loginUser, hasUserById, getDevicesOfUser, getUserData, setupUser, verifyDevice, getFieldsOfUser } = require("../firebase");
+const { createUser, hasUser, loginUser, hasUserById, getDevicesOfUser, getUserData, setupUser, verifyDevice, getFieldsOfUser, generateCustomTokenUser, verifyPassword, updatePassword } = require("../firebase");
 const { generateToken, verifyToken } = require("../jwt");
 
 //Create
@@ -145,6 +145,58 @@ async function UserDataRoute(req, res) {
 
 }
 
+// Gera um token personalizado
+
+async function CustomTokenUserRoute (req, res){
+    const token = getTokenHeader(req);
+
+    const data = verifyToken(token);
+    const { uid } = data;
+
+    const customToken =await generateCustomTokenUser(uid);
+    res.send({
+        status: 'success',
+        customToken
+    })
+    
+}
+
+async function UpdatePasswordRoute(req, res){
+
+    const { token_id, new_password } = req.body;
+
+    const token = getTokenHeader(req);
+
+    if (!token || !token_id || !new_password ) {
+        res.send({
+            status: 'failed',
+            message: 'Invalid request'
+        })
+        return;
+
+    }
+
+    const response = await updatePassword(token_id, new_password);
+    
+    if (response){
+        res.send({
+            status: 'success',
+            message: 'Password updated'
+        })
+        return;
+     
+    }
+    else{
+        res.send({
+            status: 'failed',
+            message: 'Invalid token'
+        })
+        return;
+    }
+
+
+}
+
 // Setup Route
 
 async function UserSetupRoute(req, res) {
@@ -209,5 +261,7 @@ module.exports = {
     LoginUserRoute,
     VerifyUserRoute,
     UserDataRoute,
-    UserSetupRoute
+    UserSetupRoute, 
+    CustomTokenUserRoute, 
+    UpdatePasswordRoute
 }

@@ -7,7 +7,7 @@ const { createServer } = require("http");
 const { getServerIP, getClientIP } = require('./server_info');
 
 const { HomeRoute } = require('./routes/home');
-const { CreateUserRoute, LoginUserRoute, VerifyUserRoute, UserDataRoute, UserSetupRoute
+const { CreateUserRoute, LoginUserRoute, VerifyUserRoute, UserDataRoute, UserSetupRoute, CustomTokenUserRoute, UpdatePasswordRoute
 } = require('./routes/users');
 const { VerifyDeviceRoute, DeviceSendDataRoute, DeviceDataRoute, DataSensDeviceRoute } = require('./routes/devices');
 const {initServerSocket} = require('./socket');
@@ -45,6 +45,8 @@ app.post('/users', CreateUserRoute);
 app.post('/login', LoginUserRoute);
 app.get('/users/data',authMiddleware,  UserDataRoute);
 app.post('/users/setup',authMiddleware, UserSetupRoute);
+app.get('/users/custom-token',authMiddleware, CustomTokenUserRoute);
+app.post('/users/update/password',authMiddleware, UpdatePasswordRoute);
 
 
 

@@ -10,6 +10,7 @@ admin.initializeApp({
 
 
 async function getDevicesOfUser(user_id) {
+
     const _query = await admin.firestore().collection('devices').where(
         'user_id', '==', user_id
     ).get();
@@ -48,7 +49,12 @@ async function saveDataOfDevice(device_id, data) {
 }
 
 async function getUserData(uid) {
-    return (await admin.firestore().collection('users').doc(uid).get()).data();
+    const user = await admin.auth().getUser(uid);
+    return {
+       ...(await admin.firestore().collection('users').doc(uid).get()).data(), 
+       emailVerified: user.emailVerified, 
+       disabled: user.disabled
+    };
 
 }
 
@@ -178,6 +184,32 @@ async function getSensData(device_id, min, max) {
 
 }
 
+async function generateCustomTokenUser(uid){
+return (await admin.auth().createCustomToken(uid));
+}
+
+async function updatePassword(token_id, new_password){
+    try {
+        const decodedToken = await admin.auth()
+            .verifyIdToken(token_id);
+
+        const uid =decodedToken.uid;
+        await admin.auth().updateUser(uid, {
+            password: new_password
+        });
+        return true;
+
+
+    }
+    catch (err) {
+        console.log(err.message);
+
+        return false;
+    }
+
+}
+
+
 module.exports = {
     createUser,
     hasUser,
@@ -189,5 +221,7 @@ module.exports = {
     getDevicesOfUser,
     getFieldsOfUser,
     setupUser,
-    getSensData
+    getSensData, 
+    generateCustomTokenUser, 
+    updatePassword
 }

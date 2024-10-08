@@ -1,5 +1,5 @@
 const { getTokenHeader } = require("../auth");
-const { createUser, hasUser, loginUser, hasUserById, getDevicesOfUser, getUserData, setupUser, verifyDevice, getFieldsOfUser, generateCustomTokenUser, verifyPassword, updatePassword } = require("../firebase");
+const { createUser, hasUser, loginUser, hasUserById, getDevicesOfUser, getUserData, verifyDevice, getFieldsOfUser, generateCustomTokenUser, verifyPassword, updatePassword } = require("../firebase");
 const { generateToken, verifyToken } = require("../jwt");
 
 //Create
@@ -132,7 +132,7 @@ async function UserDataRoute(req, res) {
     const { uid } = data;
 
     const user_data = await getUserData(uid);
-    const fields = await getFieldsOfUser(uid);
+    const fields = await getFieldsOfUser(uid, user_data.email);
 
     res.send({
         status: 'success',
@@ -197,71 +197,11 @@ async function UpdatePasswordRoute(req, res){
 
 }
 
-// Setup Route
-
-async function UserSetupRoute(req, res) {
-
-    const { nome_propriedade, device_id,
-        latitude, longitude, tipo_solo,
-        tipo_cultura, address
-    } = req.body;
-
-    const token = getTokenHeader(req);
-
-
-    if (!token || !nome_propriedade || !device_id
-        || !latitude || !longitude || !tipo_solo || !tipo_cultura || !address
-    ) {
-        res.send({
-            status: 'failed',
-            message: 'Invalid request'
-        })
-        return;
-    }
-
-
-    const data = verifyToken(token);
-
-    const { uid } = data;
-
-
-    const device = await verifyDevice(device_id);
-
-    if (device == null) {
-        res.send({
-            status: 'failed',
-            message: 'Device not exists'
-        })
-        return;
-    }
-    else if (device.user_id && device.field_id) {
-        res.send({
-            status: 'failed',
-            message: 'Device is already being used'
-        })
-        return;
-    }
-
-    await setupUser(device_id, uid, {
-        nome_propriedade,
-        latitude,
-        longitude,
-        tipo_solo,
-        tipo_cultura, 
-        address
-    })
-    res.send({
-        status: 'success',
-        message: 'Account configured'
-    })
-
-}
 module.exports = {
     CreateUserRoute,
     LoginUserRoute,
     VerifyUserRoute,
     UserDataRoute,
-    UserSetupRoute, 
     CustomTokenUserRoute, 
     UpdatePasswordRoute
 }

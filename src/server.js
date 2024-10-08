@@ -12,7 +12,7 @@ const { CreateUserRoute, LoginUserRoute, VerifyUserRoute, UserDataRoute, CustomT
 const { VerifyDeviceRoute, DeviceSendDataRoute, DeviceDataRoute, DataSensDeviceRoute } = require('./routes/devices');
 const {initServerSocket} = require('./socket');
 const { authMiddleware } = require('./middleware');
-const { InviteFriendRoute, AddFieldRoute, GetFieldRoute, UpdateFieldRoute, DeleteFieldRoute } = require('./routes/fields');
+const { InviteFriendRoute, AddFieldRoute, GetFieldRoute, UpdateFieldRoute, DeleteFieldRoute, DeleteInviteRoute } = require('./routes/fields');
 
 
 const MODE = process.env.MODE || 'PRODUCTION';
@@ -48,7 +48,8 @@ app.get('/users/data',authMiddleware,  UserDataRoute);
 app.get('/users/custom-token',authMiddleware, CustomTokenUserRoute);
 app.post('/users/update/password',authMiddleware, UpdatePasswordRoute);
 
-app.post('/fields/friends/invite', authMiddleware, InviteFriendRoute);
+app.post('/fields/:field_id/invites', authMiddleware, InviteFriendRoute);
+app.delete('/fields/:field_id/invites/:email', authMiddleware, DeleteInviteRoute);
 app.post('/fields',authMiddleware, AddFieldRoute);
 app.get('/fields/:id',authMiddleware, GetFieldRoute);
 app.put('/fields/:id',authMiddleware, UpdateFieldRoute);

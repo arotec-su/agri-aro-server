@@ -38,22 +38,9 @@ async function getFieldsOfUser(user_id, email) {
     return await Promise.all( [..._query1.docs, ..._query2.docs].map(async (doc) => {
         const doc_data = doc.data();
 
-        const associates = doc_data.associates ?? [];
-        
         return {
             ...doc_data,
             id: doc.id,
-            associates: await Promise.all( associates.map(async (_as) => {
-
-                const user = await admin.auth().getUserByEmail(email);
-                const user_data = (await admin.firestore().collection('users').doc(user.uid).get()).data();
-                return {
-                    email: _as,
-                    nome: user_data.nome
-                }
-
-            }))
-
         };
       
     }));
@@ -214,6 +201,13 @@ async function deleteField(field_id, device_id){
 
 }
 
+async function updateAssociatesField(field_id, associates) {
+    await admin.firestore().collection('fields').doc(field_id).update({
+        associates
+    });
+
+}
+
 async function getSensData(device_id, min, max) {
     const _query = await admin.firestore().collection(`dados_${device_id}`)
         .where("moment", ">", Timestamp.fromDate(new Date(min))).where("moment", "<", Timestamp.fromDate(new Date(max)))
@@ -269,23 +263,18 @@ async function associateUser(field_id, email) {
         const doc = admin.firestore().collection('fields').doc(field_id);
         const doc_data = (await doc.get()).data();
 
-        const user = await admin.auth().getUserByEmail(email);
-
-        const friend = (await admin.firestore().collection('users').doc(user.uid).get()).data();
         const associates = doc_data.associates ?? [];
 
         await doc.update({
             associates: [
                 ...associates,
-                friend.email
+                email
 
             ],
 
         });
-        return {
-            email: friend.email,
-            nome: friend.nome
-        }
+        return true;
+    
     } catch (ex) {
         console.log(ex.message);
         return null;
@@ -308,6 +297,7 @@ module.exports = {
     addField,
     updateField, 
     deleteField,
+    updateAssociatesField, 
     getSensData,
     generateCustomTokenUser,
     updatePassword,

@@ -1,9 +1,10 @@
 const { getTokenHeader } = require("../auth");
-const { verifyField, verifyDevice, associateUser, hasUser, getUserData, addField, updateField, deleteField } = require("../firebase");
+const { verifyField, verifyDevice, associateUser, hasUser, getUserData, addField, updateField, deleteField, updateAssociatesField } = require("../firebase");
 const { verifyToken } = require("../jwt");
 
 async function InviteFriendRoute(req, res) {
-    const { friendEmail, field_id } = req.body;
+    const {field_id} = req.params;
+    const { friendEmail } = req.body;
 
 
     const token = getTokenHeader(req);
@@ -56,13 +57,7 @@ async function InviteFriendRoute(req, res) {
 
     const associados = field.associates ?? [];
 
-    if (associados.length > 0) {
-
-    }
-    if (associados.findIndex((_as) => {
-        if (_as.email == friendEmail) return true;
-        return false;
-    }) != -1) {
+    if (associados.includes(friendEmail)) {
         res.send({
             status: "failed",
             message: "Already associated user"
@@ -76,10 +71,6 @@ async function InviteFriendRoute(req, res) {
     if (user_associate) {
         res.send({
             status: "success",
-            data: {
-                nome: user_associate.nome,
-                email: user_associate.email
-            },
             message: "User associated"
         })
     }
@@ -90,19 +81,88 @@ async function InviteFriendRoute(req, res) {
         })
     }
 
-
-
 }
 
-/*
- if (field.user_id !== uid) {
+async function DeleteInviteRoute(req, res){
+    const {field_id, email} = req.params;
+
+
+    const token = getTokenHeader(req);
+
+    if (!token || !email || !field_id) {
+        res.send({
+            status: 'failed',
+            message: 'Invalid request'
+        })
+        return;
+    }
+    const data = verifyToken(token);
+    const { uid } = data;
+
+    const user_data = await getUserData(uid);
+    const field = await verifyField(field_id);
+
+    if (field == null) {
+        res.send({
+            status: "failed",
+            message: "Invalid field"
+        })
+        return;
+    }
+
+    if (field.user_id !== uid) {
         res.send({
             status: "failed",
             message: "Invalid owner user"
         })
         return;
     }
-*/
+
+
+    if (email == user_data.email) {
+        res.send({
+            status: "failed",
+            message: "Already owns the field"
+        })
+        return;
+    }
+
+    if (!(await hasUser(email))) {
+
+        res.send({
+            status: 'failed',
+            message: 'Friend not exists'
+        })
+        return;
+    }
+
+    var associados = field.associates ?? [];
+
+
+    if (!associados.includes(email)) {
+        res.send({
+            status: "failed",
+            message: "User is not associated"
+        })
+        return;
+    }
+  
+
+    associados = associados.filter((_email) => {
+        if (_email == email) return false;
+        return true;
+    })
+    await updateAssociatesField(field_id, associados);
+
+    res.send({
+        status: "success",
+        message: "User disassociated"
+    })
+
+
+}
+
+
 // Setup Route
 
 async function AddFieldRoute(req, res) {
@@ -326,6 +386,7 @@ async function DeleteFieldRoute(req, res){
 
 module.exports = {
     InviteFriendRoute,
+    DeleteInviteRoute,
     GetFieldRoute,
     AddFieldRoute, UpdateFieldRoute, 
     DeleteFieldRoute

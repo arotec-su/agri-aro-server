@@ -28,12 +28,12 @@ async function VerifyDeviceRoute(req, res) {
 }
 
 async function DeviceSendDataRoute(req, res) {
-    const { T, UA, US, DEVICE_ID } = req.body;
+    const { T, UA, US, PH, NITROGENIO, POTASSIO, FOSFORO, DEVICE_ID } = req.body;
 
     console.log(req.body);
 
 
-    if (!T || !UA || !US || !DEVICE_ID) {
+    if (!T || !UA || !US || !PH || !NITROGENIO || !POTASSIO || !FOSFORO || !DEVICE_ID) {
         res.send({
             status: 'failed',
             message: 'Invalid request'
@@ -54,10 +54,10 @@ async function DeviceSendDataRoute(req, res) {
         temperatura: T,
         umidade_ambiental: UA,
         umidade_solo: US,
-        ph: 0,
-        nitrogenio: 0,
-        fosforo: 0,
-        potassio: 0,  
+        ph: PH,
+        nitrogenio: NITROGENIO,
+        fosforo: FOSFORO,
+        potassio: POTASSIO,  
         moment: Timestamp.now()
     };
 

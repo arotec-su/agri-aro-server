@@ -33,7 +33,7 @@ async function DeviceSendDataRoute(req, res) {
     console.log(req.body);
 
 
-    if (!T || !UA || !US || !PH || !NITROGENIO || !POTASSIO || !FOSFORO || !DEVICE_ID) {
+    if (T == undefined || UA == undefined  || US == undefined  || PH  == undefined || NITROGENIO== undefined  || POTASSIO== undefined  || FOSFORO== undefined  || DEVICE_ID== undefined ) {
         res.send({
             status: 'failed',
             message: 'Invalid request'
@@ -93,7 +93,7 @@ async function DeviceDataRoute(req, res) {
     //id do device
     const { id } = req.params;
 
-    if (!token || !id) {
+    if (!token || id== undefined ) {
         res.send({
             status: 'failed',
             message: 'Invalid request'
@@ -147,7 +147,7 @@ async function DataSensDeviceRoute(req, res) {
     //id do device
     const { id } = req.params;
 
-    if (!token || !id || !min_date || !max_date) {
+    if (!token || id== undefined  || !min_date || !max_date) {
         res.send({
             status: 'failed',
             message: 'Invalid request'

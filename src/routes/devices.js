@@ -3,6 +3,7 @@ const { verifyDevice, saveDataOfDevice, getUserData, getDevicesOfUser, hasUserBy
 const { verifyToken } = require("../jwt");
 const { sockets } = require("../socket");
 const { getTokenHeader } = require("../auth");
+const { verifySensParms } = require("../services/alerts");
 
 
 async function VerifyDeviceRoute(req, res) {
@@ -79,6 +80,7 @@ async function DeviceSendDataRoute(req, res) {
 
     }
 
+     verifySensParms(device.field_id, data);
 
     res.send({
         status: "success",
@@ -127,7 +129,6 @@ async function DeviceDataRoute(req, res) {
 
             })
         }
-
 
     }
     else {

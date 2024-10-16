@@ -69,7 +69,24 @@ function dateToString(date, type = '') {
     }
 }
 
+
+
+function inInterval(value, interval) {   
+
+    if (interval == undefined){
+        return true;
+    }
+
+    if (value <= interval.max && value >= interval.min){
+        return true;
+
+    }
+    return false;
+
+}
+
 module.exports = {
     getDateExtensive, 
-    dateToString
+    dateToString, 
+    inInterval
 }

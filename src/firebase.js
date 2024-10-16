@@ -9,6 +9,8 @@ admin.initializeApp({
 });
 
 
+
+
 async function getDevicesOfUser(user_id) {
 
     const _query = await admin.firestore().collection('devices').where(

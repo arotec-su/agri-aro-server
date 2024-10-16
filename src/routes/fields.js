@@ -1,4 +1,5 @@
 const { getTokenHeader } = require("../auth");
+const { culturasParams, solos } = require("../data/fieldsParams");
 const { verifyField, verifyDevice, associateUser, hasUser, getUserData, addField, updateField, deleteField, updateAssociatesField } = require("../firebase");
 const { verifyToken } = require("../jwt");
 
@@ -384,10 +385,22 @@ async function DeleteFieldRoute(req, res){
 
 }
 
+
+async function GetFieldsParamsRoute(req, res){
+   return res.json({
+       status: 'success', 
+       data: {
+        culturasParams: culturasParams, 
+        solos: solos
+       }
+    })
+}
+
 module.exports = {
     InviteFriendRoute,
     DeleteInviteRoute,
     GetFieldRoute,
     AddFieldRoute, UpdateFieldRoute, 
-    DeleteFieldRoute
+    DeleteFieldRoute, 
+    GetFieldsParamsRoute
 }

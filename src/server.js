@@ -12,7 +12,7 @@ const { CreateUserRoute, LoginUserRoute, VerifyUserRoute, UserDataRoute, CustomT
 const { VerifyDeviceRoute, DeviceSendDataRoute, DeviceDataRoute, DataSensDeviceRoute } = require('./routes/devices');
 const {initServerSocket} = require('./socket');
 const { authMiddleware } = require('./middleware');
-const { InviteFriendRoute, AddFieldRoute, GetFieldRoute, UpdateFieldRoute, DeleteFieldRoute, DeleteInviteRoute } = require('./routes/fields');
+const { InviteFriendRoute, AddFieldRoute, GetFieldRoute, UpdateFieldRoute, DeleteFieldRoute, DeleteInviteRoute, GetFieldsParamsRoute } = require('./routes/fields');
 const { initJob } = require('./services/jobs');
 
 
@@ -45,12 +45,15 @@ initJob();
 
 
 app.get('/', HomeRoute);
+
+app.post('/login', LoginUserRoute);
 app.get('/users/verify', authMiddleware,  VerifyUserRoute);
 app.post('/users', CreateUserRoute);
-app.post('/login', LoginUserRoute);
 app.get('/users/data',authMiddleware,  UserDataRoute);
 app.get('/users/custom-token',authMiddleware, CustomTokenUserRoute);
 app.post('/users/update/password',authMiddleware, UpdatePasswordRoute);
+
+app.get('/params/fields',authMiddleware, GetFieldsParamsRoute);
 
 app.post('/fields/:field_id/invites', authMiddleware, InviteFriendRoute);
 app.delete('/fields/:field_id/invites/:email', authMiddleware, DeleteInviteRoute);
@@ -58,7 +61,6 @@ app.post('/fields',authMiddleware, AddFieldRoute);
 app.get('/fields/:id',authMiddleware, GetFieldRoute);
 app.put('/fields/:id',authMiddleware, UpdateFieldRoute);
 app.delete('/fields/:id',authMiddleware, DeleteFieldRoute);
-
 
 app.get('/devices/verify/:id', VerifyDeviceRoute);
 app.get('/devices/:id/data_sens', authMiddleware,  DataSensDeviceRoute);

@@ -148,6 +148,24 @@ async function loginUser(token_id) {
 
 }
 
+async function getFields(){
+
+    const query = await admin.firestore().collection('fields').get();
+    if (query.size == 0){
+        return [];
+    }
+
+    const docs = query.docs.map((doc)=>{
+        return {
+         id: doc.id, 
+         ...doc.data()
+        }
+    });
+
+    return docs;
+
+}
+
 async function addField(device_id, uid, data) {
     const { position, field_size, field_name,
         tipo_solo,
@@ -301,5 +319,6 @@ module.exports = {
     getSensData,
     generateCustomTokenUser,
     updatePassword,
-    associateUser
+    associateUser, 
+    getFields
 }

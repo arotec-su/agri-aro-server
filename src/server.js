@@ -13,6 +13,7 @@ const { VerifyDeviceRoute, DeviceSendDataRoute, DeviceDataRoute, DataSensDeviceR
 const {initServerSocket} = require('./socket');
 const { authMiddleware } = require('./middleware');
 const { InviteFriendRoute, AddFieldRoute, GetFieldRoute, UpdateFieldRoute, DeleteFieldRoute, DeleteInviteRoute } = require('./routes/fields');
+const { initJob } = require('./services/jobs');
 
 
 const MODE = process.env.MODE || 'PRODUCTION';
@@ -33,11 +34,14 @@ app.use( function(req, res, next){
   next();
 })
 
+app.use(express.static('public'))
+
 const server = createServer(app, {
   cors: corsConfig
 });
 
 initServerSocket(server, corsConfig);
+initJob();
 
 
 app.get('/', HomeRoute);

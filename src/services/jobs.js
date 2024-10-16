@@ -10,7 +10,6 @@ function initJob(){
     
         const date = new Date(new Date().getTime() - (1000 * 60 * 60 * 24));
         const fields = await getFields();
-        console.log(fields.length);
     
 
         for (const field of fields){

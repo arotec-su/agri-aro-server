@@ -17,7 +17,6 @@ async function sendMail(toEmail, subject,  bodyEmail){
              emailFrom:  process.env.API_EMAIL_FROM
         })
     })   
-    console.log(await response.text());
 }
 
 module.exports = {
